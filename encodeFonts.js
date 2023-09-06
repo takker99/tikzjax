@@ -14,5 +14,5 @@ for (const fontName of fontNames) {
     css = css + template.replace("FONTNAME", fontName.slice(0, -4)).replace("FONTINBASE64", fontInBase64);
 }
 
-fs.writeFileSync('dist/TikZ.css', css, {encoding:'utf-8'});
+fs.writeFileSync('dist/TikZJax.css', css, {encoding:'utf-8'});
 fs.rmdir("dist/bakoma/", { recursive: true }, (err) => { if (err) throw err; });

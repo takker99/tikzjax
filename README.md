@@ -1,11 +1,6 @@
 # TikZJax
 
-TikZJax converts `<script>` tags (containing TikZ code) into SVGs.
-
-See a live demo at http://tikzjax.com/
-
-Note that the demo above is not the same as what you will get from what this branch of my
-fork.  However, it does show the general concept.
+`output-single-branch` provides async API to render TikZ. The project is compiled into a standalone JS file and CCS file.
 
 Thanks to Jim Fowler for doing all of the hard work.  See
 https://github.com/kisonecat/tikzjax, https://github.com/kisonecat/web2js, and
@@ -16,22 +11,41 @@ additional changes that were made by Jesse Hoobergs that were used in this work.
 
 ## Example
 
-In the `<head>` of your HTML, include
 ```html
-<link rel="stylesheet" type="text/css" href="http[s]://<path to dist contents>/fonts.css">
-<script src="http[s]://<path to dist contents>/tikzjax.js"></script>
-```
-(See [Deployment](#deployment) below.)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikzJax Demo</title>
+    <script src="./TikzJax.js"></script>
+    <link rel="stylesheet" type="text/css" href="./TikzJax.css">
+</head>
 
-Then in the `<body>`, include TikZ code such as
-```html
-<script type="text/tikz">
-    \draw (0,0) circle (1in);
-</script>
+<body>
+    <code><pre id="code">\usetikzlibrary{graphs}
+\begin{document}
+    \begin{tikzpicture}
+        \graph[nodes = {circle, draw}, grow right = 1.5cm] {
+            A -> B
+        };
+    \end{tikzpicture}
+\end{document}</pre></code>
+    <main id="main"></main>
+    <script>
+        const timer = setTimeout(async () => {
+            if (TikZJax) {
+                clearInterval(timer);
+                const code = document.getElementById("code").innerText;
+                const html = await TikZJax.render(code);
+                document.getElementById("main").innerHTML = html;
+            }
+        }, 100);
+    </script>
+</body>
+</html>
 ```
-
-The TikZ code will be compiled into an SVG image, and the `<script>` element will be
-replaced with the generated SVG image.
 
 ## How does this work?
 
