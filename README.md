@@ -1,6 +1,6 @@
 # TikZJax
 
-`output-single-branch` provides async API to render TikZ. The project is compiled into a standalone JS file and CCS file.
+The `output-single-file` branch provides async API to render TikZ. The entire project is compiled into a standalone JS file and CCS file.
 
 Thanks to Jim Fowler for doing all of the hard work.  See
 https://github.com/kisonecat/tikzjax, https://github.com/kisonecat/web2js, and
