@@ -12,13 +12,7 @@ additional changes that were made by Jesse Hoobergs that were used in this work.
 ## Example
 
 ```html
-<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikzJax Demo</title>
     <script src="./TikzJax.js"></script>
     <link rel="stylesheet" type="text/css" href="./TikzJax.css">
 </head>
@@ -34,17 +28,14 @@ additional changes that were made by Jesse Hoobergs that were used in this work.
 \end{document}</pre></code>
     <main id="main"></main>
     <script>
-        const timer = setTimeout(async () => {
-            if (TikZJax) {
-                clearInterval(timer);
-                const code = document.getElementById("code").innerText;
-                const html = await TikZJax.render(code);
-                document.getElementById("main").innerHTML = html;
-            }
-        }, 100);
+        (async function() {
+            await TikZJax.initialize();
+            const code = document.getElementById('code').innerText;
+            const html = await TikZJax.render(code);
+            document.getElementById('main').innerHTML = html;
+        })();
     </script>
 </body>
-</html>
 ```
 
 ## How does this work?

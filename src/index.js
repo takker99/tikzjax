@@ -9,7 +9,11 @@ import { optimize } from "./svgo.browser";
 var coredump;
 var code;
 
-let TikZJax = {
+window.TikZJax = {
+	initialize: async function () {
+		code = await loadDecompress('tex.wasm.gz');
+		coredump = new Uint8Array(await loadDecompress('core.dump.gz'), 0, library.pages * 65536);
+	},
 	render: async function (input) {
 		library.writeFileSync("input.tex", Buffer.from(input));
 	
@@ -98,11 +102,3 @@ async function loadDecompress(file) {
 		throw `Unable to load ${file}.  File not available.`;
 	}
 }
-
-async function initialize() {
-	code = await loadDecompress('tex.wasm.gz');
-	coredump = new Uint8Array(await loadDecompress('core.dump.gz'), 0, library.pages * 65536);
-	window.TikZJax = TikZJax;
-}
-
-initialize();
