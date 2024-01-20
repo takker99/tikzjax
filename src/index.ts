@@ -1,4 +1,5 @@
 import * as library from "./library.js";
+import * as timeback from "./timeBack.ts";
 
 let coredump: Uint8Array | undefined;
 let code: Uint8Array | undefined;
@@ -30,8 +31,8 @@ export const compile = async (input: string): Promise<Uint8Array> => {
   library.setShowConsole();
 
   const wasm = await WebAssembly.instantiate(code!, {
-    library: library,
-    env: { memory: memory },
+    library: { ...library, ...timeback },
+    env: { memory },
   });
 
   // Execute the tex web assembly.

@@ -206,25 +206,6 @@ export function executeAsync(_wasmExports) {
   return finished.promise;
 }
 
-// provide time back to tex
-
-export function getCurrentMinutes() {
-  const d = new Date();
-  return 60 * (d.getHours()) + d.getMinutes();
-}
-
-export function getCurrentDay() {
-  return (new Date()).getDate();
-}
-
-export function getCurrentMonth() {
-  return (new Date()).getMonth() + 1;
-}
-
-export function getCurrentYear() {
-  return (new Date()).getFullYear();
-}
-
 // print
 
 export function printString(descriptor, x) {
