@@ -4,16 +4,16 @@ import * as timeback from "./timeBack.ts";
 let coredump: Uint8Array | undefined;
 let code: Uint8Array | undefined;
 
-const initialize = async () => {
-  code ??= await loadDecompress("../tex.wasm.gz");
+export const compile = async (
+  input: string,
+  fileLoader: (filename: string) => Promise<Uint8Array>,
+): Promise<Uint8Array> => {
+  code ??= await fileLoader("tex.wasm.gz");
   coredump ??= new Uint8Array(
-    await loadDecompress("../core.dump.gz"),
+    await fileLoader("core.dump.gz"),
     0,
     library.pages * 65536,
   );
-};
-export const compile = async (input: string): Promise<Uint8Array> => {
-  await initialize();
   library.writeFileSync("input.tex", new TextEncoder().encode(input));
 
   // Set up the tex web assembly.
@@ -27,7 +27,7 @@ export const compile = async (input: string): Promise<Uint8Array> => {
 
   library.setMemory(memory.buffer);
   library.setInput(" input.tex \n\\end\n");
-  library.setFileLoader(loadDecompress);
+  library.setFileLoader(fileLoader);
   library.setShowConsole();
 
   const wasm = await WebAssembly.instantiate(code!, {
@@ -49,20 +49,4 @@ export const compile = async (input: string): Promise<Uint8Array> => {
   // Use dvi2html to convert the dvi to svg.
 
   return dvi;
-};
-
-const loadDecompress = async (file: string) => {
-  try {
-    if (file.endsWith(".tfm")) {
-      return await Deno.readFile(new URL(file, import.meta.url));
-    }
-    const fsFile = await Deno.open(new URL(file, import.meta.url));
-    const unzippedStream = fsFile.readable.pipeThrough(
-      new DecompressionStream("gzip"),
-    );
-    return new Uint8Array(await new Response(unzippedStream).arrayBuffer());
-  } catch (e: unknown) {
-    console.error(e);
-    throw e;
-  }
 };

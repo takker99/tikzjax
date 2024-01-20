@@ -47,11 +47,29 @@ const { args: [filename, output] } = await new Command()
   .arguments("<input:string> [output:string]")
   .parse(Deno.args);
 
-const tfmLoader = async (name: string) => {
+const loadDecompress = async (file: string) => {
+  try {
+    if (file.endsWith(".tfm")) {
+      return await Deno.readFile(
+        new URL(`./dist/bakoma/tfm/${file}`, import.meta.url),
+      );
+    }
+    const fsFile = await Deno.open(
+      new URL(`./assets/${file}`, import.meta.url),
+    );
+    const unzippedStream = fsFile.readable.pipeThrough(
+      new DecompressionStream("gzip"),
+    );
+    return new Uint8Array(await new Response(unzippedStream).arrayBuffer());
+  } catch (e: unknown) {
+    console.error(e);
+    throw e;
+  }
 };
 
 const dvi = await compile(
   await Deno.readTextFile(resolve(Deno.cwd(), filename)),
+  loadDecompress,
 );
 const commands:
   (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
@@ -59,7 +77,8 @@ const fontNames = new Set<string>();
 for await (
   const command of parse(dvi, {
     plugins: [papersize, ps(), svg(), color()],
-    tfmLoader,
+    tfmLoader: async (fontname) =>
+      new Uint32Array((await loadDecompress(`${fontname}.tfm`)).buffer),
   })
 ) {
   commands.push(command);
