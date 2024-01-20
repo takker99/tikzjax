@@ -1,4 +1,4 @@
-import { compile } from "./src/index.ts";
+import { compile } from "./mod.ts";
 import { convertToHTML } from "https://raw.githubusercontent.com/takker99/dvi2html/0.3.0/mod.ts";
 import {
   Color,
@@ -23,7 +23,9 @@ import { resolve } from "https://deno.land/std@0.212.0/path/mod.ts";
 import { Command } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts#^";
 import { Spinner } from "https://deno.land/std@0.212.0/cli/mod.ts";
 
-if (!await exists("./dist/bakoma/tfm/")||!await exists("./dist/amsfonts/tfm")) {
+if (
+  !await exists("./dist/bakoma/tfm/") || !await exists("./dist/amsfonts/tfm")
+) {
   const spinner = new Spinner({ message: "Downloading fonts..." });
   spinner.start();
   const [bakoma, amsfonts] = await Promise.all([
@@ -57,12 +59,11 @@ const loadDecompress = async (file: string) => {
   try {
     if (file.endsWith(".tfm")) {
       try {
-
-      return await Deno.readFile(
-        new URL(`./dist/bakoma/tfm/${file}`, import.meta.url),
-      );
-      }catch(e:unknown){
-        if(!(e instanceof Deno.errors.NotFound)) throw e;
+        return await Deno.readFile(
+          new URL(`./dist/bakoma/tfm/${file}`, import.meta.url),
+        );
+      } catch (e: unknown) {
+        if (!(e instanceof Deno.errors.NotFound)) throw e;
         return await Deno.readFile(
           new URL(`./dist/amsfonts/tfm/${file}`, import.meta.url),
         );
