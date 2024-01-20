@@ -23,20 +23,26 @@ import { resolve } from "https://deno.land/std@0.212.0/path/mod.ts";
 import { Command } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts#^";
 import { Spinner } from "https://deno.land/std@0.212.0/cli/mod.ts";
 
-if (!await exists("./dist/bakoma/ttf/")) {
+if (!await exists("./dist/bakoma/tfm/")||!await exists("./dist/amsfonts/tfm")) {
   const spinner = new Spinner({ message: "Downloading fonts..." });
   spinner.start();
-  const res = await fetch(
-    "http://mirrors.ctan.org/fonts/cm/ps-type1/bakoma.zip",
-  );
-  const data = await res.arrayBuffer();
+  const [bakoma, amsfonts] = await Promise.all([
+    fetch(
+      "http://mirrors.ctan.org/fonts/cm/ps-type1/bakoma.zip",
+    ).then((res) => res.arrayBuffer()),
+
+    fetch("http://mirrors.ctan.org/fonts/amsfonts.zip").then((res) =>
+      res.arrayBuffer()
+    ),
+  ]);
   spinner.message = "Extracting fonts...";
 
-  const zip = new JSZip();
-  await zip.loadAsync(data);
-
   await ensureDir(new URL("./dist", import.meta.url));
-  await zip.unzip("./dist");
+  await Promise.all([
+    new JSZip().loadAsync(bakoma).then((zip) => zip.unzip("./dist")),
+    new JSZip().loadAsync(amsfonts).then((zip) => zip.unzip("./dist")),
+  ]);
+
   spinner.stop();
 }
 
@@ -50,9 +56,17 @@ const { args: [filename, output] } = await new Command()
 const loadDecompress = async (file: string) => {
   try {
     if (file.endsWith(".tfm")) {
+      try {
+
       return await Deno.readFile(
         new URL(`./dist/bakoma/tfm/${file}`, import.meta.url),
       );
+      }catch(e:unknown){
+        if(!(e instanceof Deno.errors.NotFound)) throw e;
+        return await Deno.readFile(
+          new URL(`./dist/amsfonts/tfm/${file}`, import.meta.url),
+        );
+      }
     }
     const fsFile = await Deno.open(
       new URL(`./assets/${file}`, import.meta.url),
@@ -73,30 +87,30 @@ const { dvi } = await compile(
 );
 
 if (dvi) {
-const commands:
-  (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
-const fontNames = new Set<string>();
-for await (
-  const command of parse(dvi, {
-    plugins: [papersize, ps(), svg(), color()],
-    tfmLoader: async (fontname) =>
-      new Uint32Array((await loadDecompress(`${fontname}.tfm`)).buffer),
-  })
-) {
-  commands.push(command);
-  if (command.type !== "text") continue;
-  fontNames.add(command.font.name);
-}
-const page = convertToHTML(commands);
+  const commands:
+    (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
+  const fontNames = new Set<string>();
+  for await (
+    const command of parse(dvi, {
+      plugins: [papersize, ps(), svg(), color()],
+      tfmLoader: async (fontname) =>
+        new Uint32Array((await loadDecompress(`${fontname}.tfm`)).buffer),
+    })
+  ) {
+    commands.push(command);
+    if (command.type !== "text") continue;
+    fontNames.add(command.font.name);
+  }
+  const page = convertToHTML(commands);
 
-const html =
-  `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TikZJax</title><style>${await makeFontCSS(
-    [...fontNames],
-  )}</style><style>.page{position:relative;width:100%;height:0;}.text{line-height:0;position:absolute; overflow:visible;}.rect{position:absolute;min-width:1px;min-height:1px;}svg{position:absolute;overflow:visible;}</style></head><body>${page}</body></html>`;
+  const html =
+    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TikZJax</title><style>${await makeFontCSS(
+      [...fontNames],
+    )}</style><style>.page{position:relative;width:100%;height:0;}.text{line-height:0;position:absolute; overflow:visible;}.rect{position:absolute;min-width:1px;min-height:1px;}svg{position:absolute;overflow:visible;}</style></head><body>${page}</body></html>`;
 
-if (output) {
-  await Deno.writeTextFile(resolve(Deno.cwd(), output), html);
-} else {
-  console.log(html);
+  if (output) {
+    await Deno.writeTextFile(resolve(Deno.cwd(), output), html);
+  } else {
+    console.log(html);
   }
 }
