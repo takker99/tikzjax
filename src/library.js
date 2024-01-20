@@ -1,7 +1,3 @@
-import tfmData from "https://raw.githubusercontent.com/takker99/dvi2html/0.3.0/tfm/fonts.json" with {
-  type: "json",
-};
-
 let filesystem = {};
 let files = [];
 let showConsole = false;
@@ -80,10 +76,6 @@ function openSync(filename, mode) {
 
   if (filesystem[filename]) {
     buffer = filesystem[filename];
-  } else if (filename.match(/\.tfm$/)) {
-    buffer = new Uint8Array(
-      new Uint32Array(tfmData[filename.replace(/\.tfm$/, "")]).buffer,
-    );
   } else if (mode == "r") {
     // If this file has been opened before without an error, that means it was written to.
     // In that case assume the file can now be opened, so fall through and create a fake file below.
@@ -107,10 +99,10 @@ function openSync(filename, mode) {
         setTimeout(async () => {
           // Attempt to load the file.
           try {
-            const data = await fileLoader(`../tex_files/${filename}.gz`);
+            const data = await fileLoader(filename.endsWith(".tfm") ? `../dist/bakoma/tfm/${filename}` : `../tex_files/${filename}.gz`);
             filesystem[filename] = data;
             // deno-lint-ignore no-empty
-          } catch (_) {}
+          } catch (_) { }
           startRewind();
         }, 0);
         return -1;

@@ -48,15 +48,6 @@ const { args: [filename, output] } = await new Command()
   .parse(Deno.args);
 
 const tfmLoader = async (name: string) => {
-  try {
-    const buffer = (await Deno.readFile(
-      new URL(`./dist/bakoma/tfm/${name}.tfm`, import.meta.url),
-    )).buffer;
-    return new Uint32Array(buffer);
-  } catch (e: unknown) {
-    console.error(e);
-    throw e;
-  }
 };
 
 const dvi = await compile(

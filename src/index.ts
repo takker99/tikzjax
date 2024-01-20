@@ -52,9 +52,17 @@ export const compile = async (input: string): Promise<Uint8Array> => {
 };
 
 const loadDecompress = async (file: string) => {
-  const fsFile = await Deno.open(new URL(file, import.meta.url));
-  const unzippedStream = fsFile.readable.pipeThrough(
-    new DecompressionStream("gzip"),
-  );
-  return new Uint8Array(await new Response(unzippedStream).arrayBuffer());
+  try {
+    if (file.endsWith(".tfm")) {
+      return await Deno.readFile(new URL(file, import.meta.url));
+    }
+    const fsFile = await Deno.open(new URL(file, import.meta.url));
+    const unzippedStream = fsFile.readable.pipeThrough(
+      new DecompressionStream("gzip"),
+    );
+    return new Uint8Array(await new Response(unzippedStream).arrayBuffer());
+  } catch (e: unknown) {
+    console.error(e);
+    throw e;
+  }
 };
