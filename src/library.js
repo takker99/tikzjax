@@ -18,7 +18,7 @@ const END_ADDR = pages * 1024 * 64;
 let windingDepth = 0;
 let sleeping = false;
 
-function startUnwind() {
+const startUnwind = () => {
   if (view) {
     view[DATA_ADDR >> 2] = DATA_ADDR + 8;
     view[DATA_ADDR + 4 >> 2] = END_ADDR;
@@ -28,17 +28,17 @@ function startUnwind() {
   windingDepth = windingDepth + 1;
 }
 
-function startRewind() {
+const startRewind=()=> {
   wasmExports.asyncify_start_rewind(DATA_ADDR);
   wasmExports.main();
 }
 
-function stopRewind() {
+const stopRewind=()=> {
   windingDepth = windingDepth - 1;
   wasmExports.asyncify_stop_rewind();
 }
 
-export function deleteEverything() {
+export const deleteEverything=()=> {
   files = [];
   filesystem = {};
   memory = null;
@@ -51,11 +51,11 @@ export function deleteEverything() {
   sleeping = false;
 }
 
-export function writeFileSync(filename, buffer) {
+export const writeFileSync=(filename, buffer)=> {
   filesystem[filename] = buffer;
 }
 
-export function readFileSync(filename) {
+export const readFileSync=(filename)=> {
   for (const f of files) {
     if (f.filename == filename) {
       return f.content.slice(0, f.position);
@@ -65,7 +65,7 @@ export function readFileSync(filename) {
   throw Error(`Could not find file ${filename}`);
 }
 
-function openSync(filename, mode) {
+const openSync=(filename, mode)=> {
   const initialSleepState = sleeping;
   if (sleeping) {
     stopRewind();
@@ -123,10 +123,10 @@ function openSync(filename, mode) {
   return files.length - 1;
 }
 
-function closeSync() { // ignore this.
+const closeSync=()=> { // ignore this.
 }
 
-function writeSync(file, buffer, pointer, length) {
+const writeSync=(file, buffer, pointer, length)=> {
   if (pointer === undefined) pointer = 0;
   if (length === undefined) length = buffer.length - pointer;
 
@@ -142,7 +142,7 @@ function writeSync(file, buffer, pointer, length) {
   file.position += length;
 }
 
-function readSync(file, buffer, pointer, length, seek) {
+const readSync=(file, buffer, pointer, length, seek)=> {
   if (pointer === undefined) pointer = 0;
   if (length === undefined) length = buffer.length - pointer;
 
@@ -155,7 +155,7 @@ function readSync(file, buffer, pointer, length, seek) {
   return length;
 }
 
-function writeToConsole(x) {
+const writeToConsole=(x)=> {
   if (!showConsole) return;
   consoleBuffer += x;
   if (consoleBuffer.indexOf("\n") >= 0) {
@@ -167,27 +167,27 @@ function writeToConsole(x) {
   }
 }
 
-export function setShowConsole() {
+export const setShowConsole=()=> {
   showConsole = true;
 }
 
 // setup
 
-export function setMemory(m) {
+export const setMemory=(m)=> {
   memory = m;
   view = new Int32Array(m);
 }
 
-export function setInput(input, cb) {
+export const setInput=(input, cb)=> {
   inputBuffer = input;
   if (cb) callback = cb;
 }
 
-export function setFileLoader(c) {
+export const setFileLoader=(c)=> {
   fileLoader = c;
 }
 
-export function executeAsync(_wasmExports) {
+export const executeAsync=(_wasmExports)=> {
   wasmExports = _wasmExports;
 
   finished = Promise.withResolvers();
@@ -200,7 +200,7 @@ export function executeAsync(_wasmExports) {
 
 // print
 
-export function printString(descriptor, x) {
+export const printString=(descriptor, x)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
   const length = new Uint8Array(memory, x, 1)[0];
   const buffer = new Uint8Array(memory, x + 1, length);
@@ -214,7 +214,7 @@ export function printString(descriptor, x) {
   writeSync(file, new TextEncoder().encode(string));
 }
 
-export function printBoolean(descriptor, x) {
+export const printBoolean=(descriptor, x)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
 
   const result = x ? "TRUE" : "FALSE";
@@ -226,7 +226,7 @@ export function printBoolean(descriptor, x) {
 
   writeSync(file, new TextEncoder().encode(result));
 }
-export function printChar(descriptor, x) {
+export const printChar=(descriptor, x)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
   if (file.stdout) {
     writeToConsole(String.fromCharCode(x));
@@ -238,7 +238,7 @@ export function printChar(descriptor, x) {
   writeSync(file, b);
 }
 
-export function printInteger(descriptor, x) {
+export const printInteger=(descriptor, x)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
   if (file.stdout) {
     writeToConsole(x.toString());
@@ -248,7 +248,7 @@ export function printInteger(descriptor, x) {
   writeSync(file, new TextEncoder().encode(`${x}`));
 }
 
-export function printFloat(descriptor, x) {
+export const printFloat=(descriptor, x)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
   if (file.stdout) {
     writeToConsole(x.toString());
@@ -258,7 +258,7 @@ export function printFloat(descriptor, x) {
   writeSync(file, new TextEncoder().encode(`${x}`));
 }
 
-export function printNewline(descriptor, _) {
+export const printNewline=(descriptor, _)=> {
   const file = (descriptor < 0) ? { stdout: true } : files[descriptor];
 
   if (file.stdout) {
@@ -269,7 +269,7 @@ export function printNewline(descriptor, _) {
   writeSync(file, new TextEncoder().encode("\n"));
 }
 
-export function reset(length, pointer) {
+export const reset=(length, pointer)=> {
   const buffer = new Uint8Array(memory, pointer, length);
   let filename = String.fromCharCode.apply(null, buffer);
 
@@ -309,7 +309,7 @@ export function reset(length, pointer) {
   return openSync(filename, "r");
 }
 
-export function rewrite(length, pointer) {
+export const rewrite=(length, pointer)=> {
   const buffer = new Uint8Array(memory, pointer, length);
   let filename = String.fromCharCode.apply(null, buffer);
 
@@ -332,7 +332,7 @@ export function rewrite(length, pointer) {
   return openSync(filename, "w");
 }
 
-export function close(descriptor) {
+export const close=(descriptor)=> {
   const file = files[descriptor];
 
   if (file.descriptor) {
@@ -340,26 +340,26 @@ export function close(descriptor) {
   }
 }
 
-export function eof(descriptor) {
+export const eof=(descriptor)=> {
   const file = files[descriptor];
 
   if (file.eof) return 1;
   else return 0;
 }
 
-export function erstat(descriptor) {
+export const erstat=(descriptor)=> {
   const file = files[descriptor];
   return file.erstat;
 }
 
-export function eoln(descriptor) {
+export const eoln=(descriptor)=> {
   const file = files[descriptor];
 
   if (file.eoln) return 1;
   else return 0;
 }
 
-export function inputln(
+export const inputln=(
   descriptor,
   bypass_eoln,
   bufferp,
@@ -367,7 +367,7 @@ export function inputln(
   lastp,
   _,
   buf_size,
-) {
+)=> {
   const file = files[descriptor];
 
   const buffer = new Uint8Array(memory, bufferp, buf_size);
@@ -411,7 +411,7 @@ export function inputln(
   return true;
 }
 
-export function get(descriptor, pointer, length) {
+export const get=(descriptor, pointer, length)=> {
   const file = files[descriptor];
 
   const buffer = new Uint8Array(memory);
@@ -447,7 +447,7 @@ export function get(descriptor, pointer, length) {
   file.position = file.position + length;
 }
 
-export function put(descriptor, pointer, length) {
+export const put=(descriptor, pointer, length)=> {
   const file = files[descriptor];
 
   const buffer = new Uint8Array(memory);
@@ -455,7 +455,7 @@ export function put(descriptor, pointer, length) {
   writeSync(file, buffer, pointer, length);
 }
 
-export function tex_final_end() {
+export const tex_final_end=()=> {
   if (consoleBuffer.length) writeToConsole("\n");
   if (finished) finished.resolve();
 }
