@@ -67,10 +67,12 @@ const loadDecompress = async (file: string) => {
   }
 };
 
-const dvi = await compile(
+const { dvi } = await compile(
   await Deno.readTextFile(resolve(Deno.cwd(), filename)),
   loadDecompress,
 );
+
+if (dvi) {
 const commands:
   (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
 const fontNames = new Set<string>();
@@ -96,4 +98,5 @@ if (output) {
   await Deno.writeTextFile(resolve(Deno.cwd(), output), html);
 } else {
   console.log(html);
+  }
 }

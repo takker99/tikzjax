@@ -4,10 +4,15 @@ import * as timeback from "./timeBack.ts";
 let coredump: Uint8Array | undefined;
 let code: Uint8Array | undefined;
 
+export interface CompileResult {
+  dvi?: Uint8Array;
+  log: Uint8Array;
+}
+
 export const compile = async (
   input: string,
   fileLoader: (filename: string) => Promise<Uint8Array>,
-): Promise<Uint8Array> => {
+): Promise<CompileResult> => {
   code ??= await fileLoader("tex.wasm.gz");
   coredump ??= new Uint8Array(
     await fileLoader("core.dump.gz"),
@@ -38,15 +43,15 @@ export const compile = async (
   // Execute the tex web assembly.
   await library.executeAsync(wasm.instance.exports);
 
-  // console.debug(new TextDecoder().decode(library.readFileSync("input.log")));
-
-  // Extract the generated dvi file.
-  const dvi = library.readFileSync("input.dvi");
-
-  // Clean up the library for the next run.
-  library.deleteEverything();
-
-  // Use dvi2html to convert the dvi to svg.
-
-  return dvi;
+  const log = library.readFileSync("input.log");
+  try {
+    // Extract the generated dvi file.
+    const dvi = library.readFileSync("input.dvi");
+    return { dvi, log };
+  } catch (_) {
+    return { log };
+  } finally {
+    // Clean up the library for the next run.
+    library.deleteEverything();
+  }
 };
