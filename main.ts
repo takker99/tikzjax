@@ -1,5 +1,5 @@
 import { compile } from "./mod.ts";
-import { convertToHTML } from "https://raw.githubusercontent.com/takker99/dvi2html/0.3.0/mod.ts";
+import { convertToHTML } from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.1/mod.ts";
 import {
   Color,
   color,
@@ -14,8 +14,7 @@ import {
   SVG,
   svg,
   Text,
-} from "https://raw.githubusercontent.com/takker99/dvi2html/0.3.0/dvi/mod.ts";
-import { makeFontCSS } from "./makeFontCSS.ts";
+} from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.1/dvi/mod.ts";
 import { exists } from "https://deno.land/std@0.212.0/fs/mod.ts";
 import { JSZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.212.0/fs/mod.ts";
@@ -48,11 +47,14 @@ if (
   spinner.stop();
 }
 
-const { args: [filename, output] } = await new Command()
+const { args: [filename, output], options } = await new Command()
   .name("tikzjax")
   .description("Compile TeX to HTML")
   .version("v0.1.1")
   .arguments("<input:string> [output:string]")
+  .option("--dvi", "Output DVI file")
+  .option("--svg", "Output standalone SVG file")
+  .option("-q, --quiet", "Disable logging")
   .parse(Deno.args);
 
 const loadDecompress = async (file: string) => {
@@ -69,6 +71,11 @@ const loadDecompress = async (file: string) => {
         );
       }
     }
+    if (file.endsWith(".ttf")) {
+      return await Deno.readFile(
+        new URL(`./dist/bakoma/ttf/${file}`, import.meta.url),
+      );
+    }
     const fsFile = await Deno.open(
       new URL(`./assets/${file}`, import.meta.url),
     );
@@ -77,41 +84,49 @@ const loadDecompress = async (file: string) => {
     );
     return new Uint8Array(await new Response(unzippedStream).arrayBuffer());
   } catch (e: unknown) {
-    console.error(e);
+    if (!options.quiet) console.error(e);
     throw e;
   }
 };
 
 const { dvi } = await compile(
   await Deno.readTextFile(resolve(Deno.cwd(), filename)),
-  loadDecompress,
+  {
+    fileLoader: loadDecompress,
+    showLog: !options.quiet,
+  },
 );
 
 if (dvi) {
-  const commands:
-    (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
-  const fontNames = new Set<string>();
-  for await (
-    const command of parse(dvi, {
-      plugins: [papersize, ps(), svg(), color()],
-      tfmLoader: async (fontname) =>
-        new Uint32Array((await loadDecompress(`${fontname}.tfm`)).buffer),
-    })
-  ) {
-    commands.push(command);
-    if (command.type !== "text") continue;
-    fontNames.add(command.font.name);
-  }
-  const page = convertToHTML(commands);
-
-  const html =
-    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TikZJax</title><style>${await makeFontCSS(
-      [...fontNames],
-    )}</style><style>.page{position:relative;width:100%;height:0;}.text{line-height:0;position:absolute; overflow:visible;}.rect{position:absolute;min-width:1px;min-height:1px;}svg{position:absolute;overflow:visible;}</style></head><body>${page}</body></html>`;
-
-  if (output) {
-    await Deno.writeTextFile(resolve(Deno.cwd(), output), html);
+  if (options.dvi) {
+    if (output) {
+      await Deno.writeFile(resolve(Deno.cwd(), output), dvi);
+    } else {
+      console.log(dvi);
+    }
   } else {
-    console.log(html);
+    const commands:
+      (Special | PS | Papersize | SVG | Color | Text | Rule | ParseInfo)[] = [];
+    const fontNames = new Set<string>();
+    for await (
+      const command of parse(dvi, {
+        plugins: [papersize, ps(), svg(), color()],
+        tfmLoader: loadDecompress,
+      })
+    ) {
+      commands.push(command);
+      if (command.type !== "text") continue;
+      fontNames.add(command.font.name);
+    }
+    const xml = await convertToHTML(commands, {
+      fileLoader: loadDecompress,
+      svg: options.svg,
+    });
+
+    if (output) {
+      await Deno.writeTextFile(resolve(Deno.cwd(), output), xml);
+    } else {
+      console.log(xml);
+    }
   }
 }

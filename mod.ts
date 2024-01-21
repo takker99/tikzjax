@@ -4,6 +4,11 @@ import * as timeback from "./timeBack.ts";
 let coredump: Uint8Array | undefined;
 let code: Uint8Array | undefined;
 
+export interface CompileInit {
+  fileLoader: (filename: string) => Promise<Uint8Array>;
+  showLog?: boolean;
+}
+
 export interface CompileResult {
   dvi?: Uint8Array;
   log: Uint8Array;
@@ -11,11 +16,11 @@ export interface CompileResult {
 
 export const compile = async (
   input: string,
-  fileLoader: (filename: string) => Promise<Uint8Array>,
+  init: CompileInit,
 ): Promise<CompileResult> => {
-  code ??= await fileLoader("tex.wasm.gz");
+  code ??= await init.fileLoader("tex.wasm.gz");
   coredump ??= new Uint8Array(
-    await fileLoader("core.dump.gz"),
+    await init.fileLoader("core.dump.gz"),
     0,
     library.pages * 65536,
   );
@@ -32,8 +37,8 @@ export const compile = async (
 
   library.setMemory(memory.buffer);
   library.setInput(" input.tex \n\\end\n");
-  library.setFileLoader(fileLoader);
-  library.setShowConsole();
+  library.setFileLoader(init.fileLoader);
+  if (init.showLog) library.setShowConsole();
 
   const wasm = await WebAssembly.instantiate(code!, {
     library: { ...library, ...timeback },
