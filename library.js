@@ -1,6 +1,7 @@
 let filesystem = {};
 let files = [];
-let showConsole = false;
+/** @type{((x: string) => void) | undefined} */
+let consoleLog;
 let consoleBuffer = "";
 let memory = null;
 let inputBuffer = null;
@@ -44,7 +45,7 @@ export const deleteEverything = () => {
   memory = null;
   inputBuffer = null;
   callback = null;
-  showConsole = false;
+  consoleLog = undefined;
   finished = null;
   wasmExports = null;
   view = null;
@@ -158,19 +159,19 @@ const readSync = (file, buffer, pointer, length, seek) => {
 };
 
 const writeToConsole = (x) => {
-  if (!showConsole) return;
+  if (!consoleLog) return;
   consoleBuffer += x;
   if (consoleBuffer.indexOf("\n") >= 0) {
     const lines = consoleBuffer.split("\n");
     consoleBuffer = lines.pop();
     for (const line of lines) {
-      if (line.length) console.log(line);
+      if (line.length) consoleLog(line);
     }
   }
 };
 
-export const setShowConsole = () => {
-  showConsole = true;
+export const setConsole = (console) => {
+  consoleLog = console;
 };
 
 // setup

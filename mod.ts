@@ -6,7 +6,7 @@ let code: Uint8Array | undefined;
 
 export interface CompileInit {
   fileLoader: (filename: string) => Promise<Uint8Array>;
-  showLog?: boolean;
+  console?: (message: string) => void;
 }
 
 export interface CompileResult {
@@ -38,7 +38,7 @@ export const compile = async (
   library.setMemory(memory.buffer);
   library.setInput(" input.tex \n\\end\n");
   library.setFileLoader(init.fileLoader);
-  if (init.showLog) library.setShowConsole();
+  if (init.console) library.setConsole(init.console);
 
   const wasm = await WebAssembly.instantiate(code!, {
     library: { ...library, ...timeback },
