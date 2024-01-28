@@ -93,7 +93,7 @@ const { dvi } = await compile(
   await Deno.readTextFile(resolve(Deno.cwd(), filename)),
   {
     fileLoader: loadDecompress,
-    showLog: !options.quiet,
+    console: options.quiet ? undefined : (x: string) => console.log(x),
   },
 );
 
