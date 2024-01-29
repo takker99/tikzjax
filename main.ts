@@ -1,5 +1,5 @@
 import { compile } from "./mod.ts";
-import { convertToHTML } from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.1/mod.ts";
+import { convertToHTML } from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.2/mod.ts";
 import {
   Color,
   color,
@@ -14,7 +14,7 @@ import {
   SVG,
   svg,
   Text,
-} from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.1/dvi/mod.ts";
+} from "https://raw.githubusercontent.com/takker99/dvi2html/0.4.2/dvi/mod.ts";
 import { exists } from "https://deno.land/std@0.212.0/fs/mod.ts";
 import { JSZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.212.0/fs/mod.ts";
