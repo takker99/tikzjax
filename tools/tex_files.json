@@ -1,5 +1,6 @@
 [
   "array.sty",
+  "bm.sty",
   "ifthen.sty",
   "pgfcalendar.code.tex",
   "pgfcalendar.sty",
