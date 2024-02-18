@@ -100,9 +100,7 @@ const openSync = (filename, mode) => {
         setTimeout(async () => {
           // Attempt to load the file.
           try {
-            const data = await fileLoader(
-              filename.endsWith(".tfm") ? filename : `${filename}.gz`,
-            );
+            const data = await fileLoader(filename);
             filesystem[filename] = data;
             // deno-lint-ignore no-empty
           } catch (_) {}

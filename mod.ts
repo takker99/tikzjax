@@ -18,9 +18,9 @@ export const compile = async (
   input: string,
   init: CompileInit,
 ): Promise<CompileResult> => {
-  code ??= await init.fileLoader("tex.wasm.gz");
+  code ??= await init.fileLoader("tex.wasm");
   coredump ??= new Uint8Array(
-    await init.fileLoader("core.dump.gz"),
+    await init.fileLoader("core.dump"),
     0,
     library.pages * 65536,
   );

@@ -77,7 +77,7 @@ const loadDecompress = async (file: string) => {
       );
     }
     const fsFile = await Deno.open(
-      new URL(`./assets/${file}`, import.meta.url),
+      new URL(`./assets/${file}.gz`, import.meta.url),
     );
     const unzippedStream = fsFile.readable.pipeThrough(
       new DecompressionStream("gzip"),
